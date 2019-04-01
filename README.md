@@ -6,3 +6,4 @@ webauto features:
 
   lists all s3 in aws
   list all contents inside an s3 bucket
+  Create and Configure S3 bucket for Hosting
