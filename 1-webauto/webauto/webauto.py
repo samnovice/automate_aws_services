@@ -13,7 +13,7 @@ Webauto automates the process of deploying static web sites to aws.
 """
 
 import boto3
-#from botocore.exceptions import ClientError
+# from botocore.exceptions import ClientError
 import click
 
 from bucket import BucketManager
@@ -23,6 +23,7 @@ from bucket import BucketManager
 
 session = None
 bucket_manager = None
+
 
 @click.group()
 @click.option('--profile', default=None, help="Use an given AWS Profile")
@@ -66,6 +67,7 @@ def configure_bucket(bucket):
 def sync_folder(pathname, bucket):
     """Sync contents from pathname or folder to S3 Bucket."""
     bucket_manager.sync(pathname, bucket)
+    print(bucket_manager.get_bucket_url(bucket_manager.s3.Bucket(bucket)))
 
 
 if __name__ == '__main__':

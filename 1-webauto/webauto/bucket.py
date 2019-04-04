@@ -1,6 +1,7 @@
 # -*- coding : utf-8 -*-
 """
-Class BucketManager to manage S3 functions
+Class BucketManager to manage S3 functions.
+
     - Create a Bucket
     - List all Buckets
     - Configure Bucket for it to be used as website
@@ -11,6 +12,8 @@ from pathlib import Path
 import mimetypes
 from botocore.exceptions import ClientError
 
+import util
+
 
 class BucketManager:
     """Manage an S3 bucket."""
@@ -18,6 +21,18 @@ class BucketManager:
     def __init__(self, session):
         """Create and BucketManager object."""
         self.s3 = session.resource('s3')
+
+    def get_region_name(self, bucket):
+        """Get the buckets region name."""
+        bucket_location = self.s3.meta.client.get_bucket_location(
+            Bucket=bucket.name)
+        return bucket_location["LocationConstraint"] or 'us-east-1'
+
+    def get_bucket_url(self, bucket):
+        """Get the website url for this bucket."""
+        return "http://{}{}".format(
+            bucket.name,
+            util.get_endpoint(self.get_region_name(bucket)).host)
 
     def all_buckets(self):
         """Get list of all S3 buckets."""
@@ -28,9 +43,8 @@ class BucketManager:
         return self.s3.Bucket(bucket_name).objects.all()
 
     def init_bucket(self, bucket_name):
-        """
+        """Create an bucket or if it already exists.
 
-        Create an bucket or if it already exists.
         initializing that bucket.
         """
         s3_bucket = None
