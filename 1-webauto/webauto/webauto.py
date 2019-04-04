@@ -18,14 +18,22 @@ import click
 
 from bucket import BucketManager
 
-session = boto3.Session(profile_name='samcoder')
-bucket_manager = BucketManager(session)
+
 # s3 = session.resource('s3')
 
-# @click.command('list-buckets')
+session = None
+bucket_manager = None
+
 @click.group()
-def cli():
+@click.option('--profile', default=None, help="Use an given AWS Profile")
+def cli(profile):
     """Webauto deploys blogs to aws."""
+    global session, bucket_manager
+    session_cfg = {}
+    if profile:
+        session_cfg['profile_name'] = profile
+    session = boto3.Session(**session_cfg)
+    bucket_manager = BucketManager(session)
 
 
 @cli.command('list_buckets')
