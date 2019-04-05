@@ -9,8 +9,7 @@ Class BucketManager to manage S3 functions.
 """
 
 from pathlib import Path
-from pprint import pprint
-from hashlib import  md5
+from hashlib import md5
 import mimetypes
 from functools import reduce
 import boto3
@@ -39,9 +38,13 @@ class BucketManager:
             Bucket=bucket.name)
         return bucket_location["LocationConstraint"] or 'us-east-1'
 
+    def get_bucket(self, bucket_name):
+        """Get bucket given the bucket name."""
+        return self.s3.Bucket(bucket_name)
+
     def get_bucket_url(self, bucket):
         """Get the website url for this bucket."""
-        return "http://{}{}".format(
+        return "http://{}.{}".format(
             bucket.name,
             util.get_endpoint(self.get_region_name(bucket)).host)
 
@@ -97,7 +100,7 @@ class BucketManager:
         paginator = self.s3.meta.client.get_paginator('list_objects_v2')
         for page in paginator.paginate(Bucket=bucket.name):
             for obj in page.get('Contents', []):
-                self.manifest[obj['Key']] =  obj['ETag']
+                self.manifest[obj['Key']] = obj['ETag']
                 # print("{} file and {}".format(obj['Key'], obj['ETag']))
 
     @staticmethod
@@ -127,7 +130,6 @@ class BucketManager:
         else:
             hash = self.hash_data(reduce(lambda x, y: x + y, (h.digest() for h in hashes)))
             return '"{}-{}"'.format(hash.hexdigest(), len(hashes))
-
 
     def configurewebsite(self, bucket):
         """Set up the bucket to host static website."""

@@ -17,24 +17,28 @@ import boto3
 import click
 
 from bucket import BucketManager
+from domain import DomainManager
 
+import util
 
 # s3 = session.resource('s3')
 
 session = None
 bucket_manager = None
+domain_manager = None
 
 
 @click.group()
 @click.option('--profile', default=None, help="Use an given AWS Profile")
 def cli(profile):
     """Webauto deploys blogs to aws."""
-    global session, bucket_manager
+    global session, bucket_manager, domain_manager
     session_cfg = {}
     if profile:
         session_cfg['profile_name'] = profile
     session = boto3.Session(**session_cfg)
     bucket_manager = BucketManager(session)
+    domain_manager = DomainManager(session)
 
 
 @cli.command('list_buckets')
@@ -68,6 +72,19 @@ def sync_folder(pathname, bucket):
     """Sync contents from pathname or folder to S3 Bucket."""
     bucket_manager.sync(pathname, bucket)
     print(bucket_manager.get_bucket_url(bucket_manager.s3.Bucket(bucket)))
+
+
+@cli.command('setup_domain')
+@click.argument('domain')
+def setup_domain(domain):
+    """Configure domain to point to S3 bucket."""
+    bucket = bucket_manager.get_bucket(domain)
+    zone = domain_manager.find_hostedzone(domain) \
+        or domain_manager.create_hostedzone(domain)
+    endpoint = util.get_endpoint(bucket_manager.get_region_name(bucket))
+    a_record = domain_manager.create_s3_domain_record(zone, domain, endpoint)
+    print("Domain configure: http://{}".format(domain))
+    print(a_record)
 
 
 if __name__ == '__main__':
