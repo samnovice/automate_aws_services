@@ -10,3 +10,4 @@ webauto features:
   - Sync contents from a given folder to a given S3 bucket
   - Set AWS profile with --profile=<profile_name>
   - Configure domain in Route53 for website hosted in S3 bucket
+  - Adding website to AWS Cloud front to leverage CDN
