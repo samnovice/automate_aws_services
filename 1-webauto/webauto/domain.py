@@ -4,8 +4,6 @@
 import uuid
 
 
-
-
 class DomainManager:
     """Manage an Route53 Domain bucket."""
 
@@ -46,6 +44,29 @@ class DomainManager:
                             'AliasTarget': {
                                 'HostedZoneId': endpoint.zone,
                                 'DNSName': endpoint.host,
+                                'EvaluateTargetHealth': False
+                                }
+                        }
+                    }
+                ]
+            }
+        )
+
+    def create_cf_domain_record(self, zone, domain_name, cf_domain):
+        """Create A Record for the s3 domain."""
+        return self.client.change_resource_record_sets(
+            HostedZoneId=zone['Id'],
+            ChangeBatch={
+                'Comment': 'Created by py script webauto',
+                'Changes': [
+                    {
+                        'Action': 'UPSERT',
+                        'ResourceRecordSet': {
+                            'Name': domain_name,
+                            'Type': 'A',
+                            'AliasTarget': {
+                                'HostedZoneId': 'Z2FDTNDATAQYW2',
+                                'DNSName': cf_domain,
                                 'EvaluateTargetHealth': False
                                 }
                         }

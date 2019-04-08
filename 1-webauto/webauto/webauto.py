@@ -13,11 +13,15 @@ Webauto automates the process of deploying static web sites to aws.
 """
 
 import boto3
-# from botocore.exceptions import ClientError
 import click
+# from botocore.exceptions import ClientError
+
 
 from bucket import BucketManager
 from domain import DomainManager
+from certificate import CertificateManager
+from cdn import DistributionManager
+
 
 import util
 
@@ -26,19 +30,23 @@ import util
 session = None
 bucket_manager = None
 domain_manager = None
+cert_manager = None
+dist_manager = None
 
 
 @click.group()
 @click.option('--profile', default=None, help="Use an given AWS Profile")
 def cli(profile):
     """Webauto deploys blogs to aws."""
-    global session, bucket_manager, domain_manager
+    global session, bucket_manager, domain_manager, cert_manager, dist_manager
     session_cfg = {}
     if profile:
         session_cfg['profile_name'] = profile
     session = boto3.Session(**session_cfg)
     bucket_manager = BucketManager(session)
     domain_manager = DomainManager(session)
+    cert_manager = CertificateManager(session)
+    dist_manager = DistributionManager(session)
 
 
 @cli.command('list_buckets')
@@ -83,8 +91,42 @@ def setup_domain(domain):
         or domain_manager.create_hostedzone(domain)
     endpoint = util.get_endpoint(bucket_manager.get_region_name(bucket))
     a_record = domain_manager.create_s3_domain_record(zone, domain, endpoint)
-    print("Domain configure: http://{}".format(domain))
+    print("Domain configured: http://{}".format(domain))
     print(a_record)
+
+
+@cli.command('find-cert')
+@click.argument('domain')
+def find_cert(domain):
+    """Find SSL certificate for given domain."""
+    print(cert_manager.find_matching_cert(domain))
+
+
+@cli.command('setup-cdn')
+@click.argument('domain')
+@click.argument('bucket')
+def setup_cdn(domain, bucket):
+    """Set up an Cloud front CDN for domain."""
+    dist = dist_manager.find_matching_dist(domain)
+
+    if not dist:
+        cert = cert_manager.find_matching_cert(domain)
+        if not cert:
+            print("No matching certificate")
+            return
+
+        dist = dist_manager.create_dist(domain, cert)
+        print("Awaiting for distribution deployment")
+        dist_manager.await_deploy(dist)
+
+    zone = domain_manager.find_hostedzone(domain) \
+        or domain_manager.create_hostedzone(domain)
+
+    domain_manager.create_cf_domain_record(zone, domain, dist['DomainName'])
+
+    print("Domain configured: https://{}".format(domain))
+
+    return
 
 
 if __name__ == '__main__':
