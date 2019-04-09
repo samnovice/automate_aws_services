@@ -17,13 +17,13 @@ import click
 # from botocore.exceptions import ClientError
 
 
-from bucket import BucketManager
-from domain import DomainManager
-from certificate import CertificateManager
-from cdn import DistributionManager
+from webauto.bucket import BucketManager
+from webauto.domain import DomainManager
+from webauto.certificate import CertificateManager
+from webauto.cdn import DistributionManager
 
 
-import util
+from webauto import util
 
 # s3 = session.resource('s3')
 
