@@ -11,3 +11,6 @@ webauto features:
   - Set AWS profile with --profile=<profile_name>
   - Configure domain in Route53 for website hosted in S3 bucket
   - Adding website to AWS Cloud front to leverage CDN
+
+Notify Feature
+  - When new EC2 instance is created by ASG slack notification is sent
